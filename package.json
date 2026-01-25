@@ -4,7 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build:all": "npm run build:frontend && npm run build:admin && npm run build:backend",
+    "build:backend": "cd backend && npm install --only=production",
+    "deploy": "npm run build:all && npm run start"
   },
-  "private": true
+  "private": true,
+  "dependencies": {
+    "concurrently": "^9.2.1"
+  }
 }
