@@ -1,8 +1,8 @@
 // backend/src/routes/auth.routes.js
 const express = require('express');
 const router = express.Router();
-const { register, login, googleAuth, forgotPassword, resetPassword } = require('../controllers/auth.controller');
-const { validateRegistration, validateLogin } = require('../middleware/validation');
+const { register, login, googleAuth, forgotPassword, resetPassword } = require('../controllers/authController');
+const { validateRegistration, validateLogin } = require('../middleware/auth');
 
 router.post('/register', validateRegistration, register);
 router.post('/login', validateLogin, login);

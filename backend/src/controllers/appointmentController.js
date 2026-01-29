@@ -1,5 +1,5 @@
 // backend/src/controllers/calendar.controller.js
-const CalendarEvent = require('../models/CalendarEvent');
+const CalendarEvent = require('../models/Appointment');
 const Client = require('../models/Client');
 const cron = require('node-cron');
 const nodemailer = require('nodemailer');
