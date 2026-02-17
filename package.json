@@ -1,0 +1,29 @@
+{
+  "name": "tailors-website",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "server": "nodemon backend/server.js",
+    "client": "cd frontend && npm start",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "build": "cd frontend && npm run build",
+    "prod": "NODE_ENV=production npm start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hensha-w/Tailoring-Website.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Hensha-w/Tailoring-Website/issues"
+  },
+  "homepage": "https://github.com/Hensha-w/Tailoring-Website#readme",
+  "description": "",
+  "dependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
