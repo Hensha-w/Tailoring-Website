@@ -82,19 +82,43 @@ export const AuthProvider = ({ children }) => {
 
     // In your AuthContext.js, update these functions:
 
+    // In your AuthContext.js, update the forgotPassword function:
+
     const forgotPassword = async (email) => {
         try {
+            setLoading(true);
             const response = await axios.post('/api/auth/forgotpassword', { email });
+
+            // Always return success even if it's a generic message
             return {
                 success: true,
-                message: response.data.message || 'Reset email sent'
+                message: response.data.message || 'Password reset email sent if account exists'
             };
         } catch (error) {
             console.error('Forgot password error:', error);
-            return {
-                success: false,
-                error: error.response?.data?.message || 'Failed to send reset email'
-            };
+
+            // Handle different error scenarios
+            if (error.response) {
+                // Server responded with error
+                return {
+                    success: false,
+                    error: error.response.data.message || 'Failed to send reset email'
+                };
+            } else if (error.request) {
+                // Request made but no response
+                return {
+                    success: false,
+                    error: 'Network error. Please check your connection.'
+                };
+            } else {
+                // Something else happened
+                return {
+                    success: false,
+                    error: 'An unexpected error occurred'
+                };
+            }
+        } finally {
+            setLoading(false);
         }
     };
 

@@ -40,7 +40,7 @@ const userSchema = new mongoose.Schema({
         trialEndDate: {
             type: Date,
             default: function() {
-                return new Date(+new Date() + 7 * 24 * 60 * 60 * 1000); // 7 days
+                return new Date(+new Date() + 7 * 24 * 60 * 60 * 1000);
             }
         },
         currentPeriodStart: {
@@ -50,7 +50,7 @@ const userSchema = new mongoose.Schema({
         currentPeriodEnd: {
             type: Date,
             default: function() {
-                return new Date(+new Date() + 30 * 24 * 60 * 60 * 1000); // 30 days
+                return new Date(+new Date() + 30 * 24 * 60 * 60 * 1000);
             }
         },
         lastPaymentDate: Date,
@@ -89,6 +89,52 @@ const userSchema = new mongoose.Schema({
     }
 });
 
+// ✅ FIXED: Use function declaration with explicit next parameter
+userSchema.pre('save', function(next) {
+    console.log('🔐 Pre-save middleware triggered');
+    console.log('📝 this.isModified exists?', typeof this.isModified === 'function');
+    console.log('📝 Password modified?', this.isModified ? this.isModified('password') : 'Unknown');
+    console.log('➡️ next type:', typeof next);
+    console.log('➡️ next is function?', typeof next === 'function');
+
+    try {
+        // Check if password is modified
+        if (this.isModified && !this.isModified('password')) {
+            console.log('✅ Password not modified, calling next()');
+            if (typeof next === 'function') {
+                return next();
+            } else {
+                console.error('❌ next is not a function, but continuing anyway');
+                return; // Just return if next isn't a function
+            }
+        }
+
+        // Hash password if needed
+        if (this.isModified && this.isModified('password')) {
+            console.log('🔐 Hashing password...');
+            const salt = bcrypt.genSaltSync(10);
+            this.password = bcrypt.hashSync(this.password, salt);
+            console.log('✅ Password hashed');
+        }
+
+        if (typeof next === 'function') {
+            next();
+        } else {
+            console.log('⚠️ next is not a function, but operation completed');
+        }
+    } catch (error) {
+        console.error('❌ Error in pre-save:', error);
+        if (typeof next === 'function') {
+            next(error);
+        }
+    }
+});
+
+// Method to check password
+userSchema.methods.matchPassword = async function(enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+};
+
 // Method to check if user can make payment
 userSchema.methods.canMakePayment = function() {
     const now = new Date();
@@ -116,7 +162,7 @@ userSchema.methods.canMakePayment = function() {
     return true;
 };
 
-// Method to check if user has access to app features
+// Method to check if user has access
 userSchema.methods.hasAccess = function() {
     const now = new Date();
 
@@ -143,27 +189,6 @@ userSchema.methods.hasAccess = function() {
     }
 
     return false;
-};
-
-// Pre-save middleware - FIXED: removed the extra 'next' parameter that was causing the error
-userSchema.pre('save', async function(next) {
-    // Only hash the password if it has been modified (or is new)
-    if (!this.isModified('password')) {
-        return next();
-    }
-
-    try {
-        const salt = await bcrypt.genSalt(10);
-        this.password = await bcrypt.hash(this.password, salt);
-        next();
-    } catch (error) {
-        next(error);
-    }
-});
-
-// Method to compare password
-userSchema.methods.matchPassword = async function(enteredPassword) {
-    return await bcrypt.compare(enteredPassword, this.password);
 };
 
 module.exports = mongoose.model('User', userSchema);

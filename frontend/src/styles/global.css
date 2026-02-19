@@ -3128,3 +3128,242 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         margin-left: var(--spacing-4);
     }
 }
+
+/* ========== CLIENT CARD PRINT SECTION STYLES ========== */
+
+/* Print button styling */
+.btn-print {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background-color: var(--primary-600);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-print:hover {
+    background-color: var(--primary-700);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-print svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+/* Client footer layout */
+.client-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    margin-top: auto;
+}
+
+.footer-actions-left,
+.footer-actions-right {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.footer-actions-left {
+    flex: 1;
+    justify-content: flex-start;
+}
+
+.footer-actions-right {
+    flex: 1;
+    justify-content: flex-end;
+}
+
+/* Client notes preview */
+.client-notes-preview {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background-color: rgba(16, 185, 129, 0.1);
+    border-radius: 0.5rem;
+    border-left: 3px solid var(--primary-600);
+    font-size: 0.9rem;
+}
+
+.notes-label {
+    color: var(--primary-600);
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+
+.notes-text {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Client contact styling */
+.client-contact {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.5rem;
+    background-color: var(--bg-secondary);
+    border-radius: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Responsive adjustments for client footer */
+@media (max-width: 768px) {
+    .client-footer {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .footer-actions-left,
+    .footer-actions-right {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .footer-actions-left {
+        justify-content: center;
+    }
+
+    .btn-print {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .footer-actions-left,
+    .footer-actions-right {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .btn-sm {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Print-specific styles (for the print window) */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .client-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+}
+
+/* Dark mode adjustments for print button */
+.dark-mode .btn-print {
+    background-color: var(--primary-600);
+    color: white;
+}
+
+.dark-mode .btn-print:hover {
+    background-color: var(--primary-700);
+}
+
+.dark-mode .client-notes-preview {
+    background-color: rgba(16, 185, 129, 0.15);
+}
+
+.dark-mode .client-contact {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+}
+
+/* Animation for print button */
+.btn-print {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-print::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+}
+
+.btn-print:active::after {
+    width: 200px;
+    height: 200px;
+}
+
+/* Print button tooltip */
+.btn-print[title] {
+    position: relative;
+}
+
+.btn-print[title]:hover::before {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.25rem 0.5rem;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    border-radius: 0.25rem;
+    white-space: nowrap;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 0.5rem;
+    z-index: 1000;
+}
+
+/* Measurement items hover effect */
+.measurement-item {
+    transition: all 0.2s ease;
+    cursor: default;
+}
+
+.measurement-item:hover {
+    background-color: rgba(16, 185, 129, 0.1);
+    transform: translateY(-1px);
+}
+
+/* Client card overall enhancements */
+.client-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.client-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-500), var(--primary-300));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.client-card:hover::before {
+    opacity: 1;
+}

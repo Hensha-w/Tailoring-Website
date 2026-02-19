@@ -31,15 +31,15 @@ exports.register = async (req, res) => {
             password
         });
 
-        // Send welcome email with trial info
+        // Send welcome email
         await sendEmail({
             email: user.email,
-            subject: 'Welcome to Tailoring Website',
+            subject: 'Welcome to TailorPro',
             html: `
-        <h1>Welcome ${user.name}!</h1>
-        <p>Thank you for signing up. You have a 30-day free trial period.</p>
-        <p>After your trial ends, a monthly subscription of ₦1500 will apply.</p>
-      `
+                <h1>Welcome ${user.name}!</h1>
+                <p>Thank you for signing up. You have a 7-day free trial period.</p>
+                <p>After your trial ends, a monthly subscription of ₦1500 will apply.</p>
+            `
         });
 
         res.status(201).json({
@@ -50,10 +50,12 @@ exports.register = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
-                subscription: user.subscription
+                subscription: user.subscription,
+                settings: user.settings
             }
         });
     } catch (error) {
+        console.error('Register error:', error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -87,6 +89,7 @@ exports.login = async (req, res) => {
             }
         });
     } catch (error) {
+        console.error('Login error:', error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -132,6 +135,7 @@ exports.googleLogin = async (req, res) => {
             }
         });
     } catch (error) {
+        console.error('Google login error:', error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -142,6 +146,8 @@ exports.forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
 
+        console.log('🔍 Processing forgot password for:', email);
+
         if (!email) {
             return res.status(400).json({
                 success: false,
@@ -149,37 +155,137 @@ exports.forgotPassword = async (req, res) => {
             });
         }
 
-        console.log('🔍 Processing forgot password for:', email);
-
         const user = await User.findOne({ email });
 
         if (!user) {
+            console.log('❌ User not found with email:', email);
+            // Always return success for security (don't reveal if email exists)
             return res.status(200).json({
                 success: true,
-                message: 'If an account exists with this email, a reset link has been sent.'
+                message: 'If an account exists with this email, a password reset link will be sent.'
             });
         }
 
+        console.log('✅ User found:', user.email);
+
         // Generate reset token
         const resetToken = crypto.randomBytes(20).toString('hex');
+
+        // Hash token and set to resetPasswordToken field
         user.resetPasswordToken = crypto
             .createHash('sha256')
             .update(resetToken)
             .digest('hex');
+
+        // Set expire (10 minutes)
         user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
 
-        // This is line 173 - make sure it's just 'await user.save()'
-        await user.save(); // No 'next' here!
+        console.log('🔐 Saving user with reset token...');
 
-        console.log('✅ Reset token generated for user:', user.email);
+        // Save the user
+        await user.save();
+        console.log('✅ User saved successfully with reset token');
 
-        // Rest of your code...
+        // Create reset URL
+        const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/resetpassword/${resetToken}`;
+
+        console.log('🔗 Reset URL created:', resetUrl);
+
+        // Send email
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: 'Password Reset Request - TailorPro',
+                html: `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <style>
+                            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                            .header { background: #10b981; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
+                            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                            .button { 
+                                display: inline-block; 
+                                padding: 12px 24px; 
+                                background: #10b981; 
+                                color: white; 
+                                text-decoration: none; 
+                                border-radius: 5px;
+                                margin: 20px 0;
+                            }
+                            .footer { margin-top: 30px; font-size: 12px; color: #666; text-align: center; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">
+                                <h1>Password Reset Request</h1>
+                            </div>
+                            <div class="content">
+                                <p>Hello ${user.name},</p>
+                                <p>You recently requested to reset your password for your TailorPro account. Click the button below to reset it:</p>
+                                
+                                <div style="text-align: center;">
+                                    <a href="${resetUrl}" class="button">Reset Password</a>
+                                </div>
+                                
+                                <p>Or copy and paste this link into your browser:</p>
+                                <p style="word-break: break-all; background: #eee; padding: 10px; border-radius: 5px;">
+                                    ${resetUrl}
+                                </p>
+                                
+                                <p>This password reset link will expire in <strong>10 minutes</strong>.</p>
+                                
+                                <p>If you didn't request a password reset, please ignore this email or contact support if you have concerns.</p>
+                            </div>
+                            <div class="footer">
+                                <p>&copy; ${new Date().getFullYear()} TailorPro. All rights reserved.</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `
+            });
+
+            console.log('✅ Reset email sent successfully to:', user.email);
+        } catch (emailError) {
+            console.error('❌ Error sending email:', emailError);
+
+            // If email fails, clean up the reset token
+            user.resetPasswordToken = undefined;
+            user.resetPasswordExpire = undefined;
+            await user.save();
+
+            return res.status(500).json({
+                success: false,
+                message: 'Error sending reset email. Please try again.'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Password reset email sent successfully'
+        });
 
     } catch (error) {
         console.error('❌ Forgot password error:', error);
+
+        // If there's an error, try to clean up any partial changes
+        try {
+            const user = await User.findOne({ email: req.body.email });
+            if (user && user.resetPasswordToken) {
+                user.resetPasswordToken = undefined;
+                user.resetPasswordExpire = undefined;
+                await user.save();
+            }
+        } catch (cleanupError) {
+            console.error('❌ Cleanup error:', cleanupError);
+        }
+
         res.status(500).json({
             success: false,
-            message: error.message || 'Could not send reset email. Please try again.'
+            message: 'An unexpected error occurred. Please try again.'
         });
     }
 };
@@ -193,23 +299,35 @@ exports.resetPassword = async (req, res) => {
             .update(req.params.resetToken)
             .digest('hex');
 
+        console.log('🔍 Processing reset password with token hash:', resetPasswordToken);
+
         const user = await User.findOne({
             resetPasswordToken,
             resetPasswordExpire: { $gt: Date.now() }
         });
 
         if (!user) {
+            console.log('❌ Invalid or expired token');
             return res.status(400).json({ message: 'Invalid or expired token' });
         }
 
+        console.log('✅ User found, setting new password');
+
+        // Set new password
         user.password = req.body.password;
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
 
         await user.save();
 
-        res.json({ success: true, message: 'Password reset successful' });
+        console.log('✅ Password reset successful for user:', user.email);
+
+        res.json({
+            success: true,
+            message: 'Password reset successful'
+        });
     } catch (error) {
+        console.error('❌ Reset password error:', error);
         res.status(500).json({ message: error.message });
     }
 };

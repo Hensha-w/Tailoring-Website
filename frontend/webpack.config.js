@@ -1,5 +1,15 @@
 const path = require('path');
 const webpack = require('webpack');
+const dotenv = require('dotenv');
+
+// Load environment variables from .env file
+const env = dotenv.config().parsed || {};
+
+// Define which env vars should be available in the browser
+const envKeys = {
+    'process.env.REACT_APP_GOOGLE_CLIENT_ID': JSON.stringify(env.REACT_APP_GOOGLE_CLIENT_ID || ''),
+    'process.env.GOOGLE_CLIENT_ID': JSON.stringify(env.GOOGLE_CLIENT_ID || '')
+};
 
 module.exports = {
     mode: 'development',
@@ -27,6 +37,10 @@ module.exports = {
             }
         ]
     },
+    plugins: [
+        new webpack.DefinePlugin(envKeys),
+        // Remove HotModuleReplacementPlugin as webpack-dev-server applies it automatically
+    ],
     devServer: {
         static: {
             directory: path.join(__dirname, 'public'),
@@ -40,22 +54,11 @@ module.exports = {
                 context: ['/api'],
                 target: 'http://localhost:5000',
                 changeOrigin: true,
-                secure: false,
-                logLevel: 'debug' // Add this for debugging
+                secure: false
             }
-        ],
-        client: {
-            overlay: {
-                errors: true,
-                warnings: false,
-            },
-            progress: true,
-        }
+        ]
     },
     resolve: {
         extensions: ['.js', '.jsx']
-    },
-    plugins: [
-        new webpack.HotModuleReplacementPlugin()
-    ]
+    }
 };
